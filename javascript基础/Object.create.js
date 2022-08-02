@@ -16,7 +16,7 @@
 
 Object.myObjectCreate = function (proto, propertiesObject = undefined) {
     // typeof 对象 === object，对象为null、数组、对象
-    // 如果proto不是null或非原始包装对象，报错
+    // 如果proto不是null、数组、对象、函数，提示报错
     if (typeof proto !== "object" && typeof proto !== "function") {
         throw new TypeError("Object prototype may only be an Object or null.")
     }
@@ -31,7 +31,7 @@ Object.myObjectCreate = function (proto, propertiesObject = undefined) {
     if (propertiesObject !== undefined) { // 不为未定义，则赋值
         Object.defineProperties(obj, propertiesObject);
     }
-    if (proto === null) {
+    if (proto === null) { // 如果proto为null，则它的__proto__属性为null
         obj.__proto__ = null;
     }
     return obj;
