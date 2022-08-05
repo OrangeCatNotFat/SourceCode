@@ -1,4 +1,4 @@
-Function.prototype.apply = function (obj) {
+Function.prototype.myApply = function (obj) {
     // 调用函数的对象不是函数，报错
     if (typeof this !== "function") {
         return new TypeError("Type Error");
