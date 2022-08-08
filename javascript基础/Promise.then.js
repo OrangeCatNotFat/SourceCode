@@ -1,0 +1,5 @@
+class Promise {
+    then(successCallback) {
+
+    }
+}
