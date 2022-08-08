@@ -40,8 +40,8 @@ class MyPromise {
     then(successCallback, failCallback) { // then方法有两个参数
         // 如果没有传入参数，则将值返回
         successCallback = successCallback ? successCallback : value => value;
-        failCallback = failCallback ? failCallback : reason => reason;
-        
+        failCallback = failCallback ? failCallback : reason => { throw reason };
+
         let promise = new MyPromise((resolve, reject) => {
             if (this.status === FULFILLED) { // 成功调用第一个回调函数
                 setTimeout(() => { // 变成异步代码，获取promise
@@ -86,6 +86,55 @@ class MyPromise {
         })
         return promise;
     }
+
+    finally(callBack) {
+        return this.then(value => {
+            return MyPromise.resolve(callBack()).then(() => value);
+        }, reason => {
+            return MyPromise.resolve(callBack()).then(() => { throw reason });
+        })
+    }
+
+    catch(failCallback) {
+        return this.then(undefined, failCallback);
+    }
+
+    static all(array) {
+        let result = []; // 结果数组，用来存放结果
+        let index = 0; // 计数器，记录是否执行完成
+
+        return new MyPromise((resolve, reject) => {
+            function addData(key, value) { // 将结果添加到结果数组中
+                result[key] = value;
+                index++;
+                if (index === array.length) resolve(result);
+            }
+
+            for (let i = 0; i < array.length; i++) {
+                let current = array[i]; // 获取当前的值
+                if (current instanceof MyPromise) { // 是一个Promise对象
+                    // 如果是一个Promise对象，我们首先要执行这个对象
+                    // 调用它的then方法，如果成功将结果添加到数组中，失败则传递错误
+                    current.then(value => addData(i, value), reason => reject(reason))
+                } else { // 是一个普通值
+                    addData(i, array[i]); // 普通值直接将结果添加到数组中
+                }
+            }
+        })
+    }
+
+    static resolve(value) {
+        if (value instanceof MyPromise) return value;
+        return new MyPromise(resolve => resolve(value));
+    }
+
+    static race(array) {
+        return new MyPromise((resolve, reject) => {
+            for (let i = 0; i < array.length; i++) {
+                Promise.resolve(array[i]).then(value => resolve(value), reason => reject(reason));
+            }
+        })
+    }
 }
 
 function resolvePromise(promise, result, resolve, reject) {
@@ -102,11 +151,3 @@ function resolvePromise(promise, result, resolve, reject) {
         resolve(result); // 直接将普通值传递
     }
 }
-
-// let promise = new MyPromise((resolve, reject) => { reject("失败") });
-// promise.then(value => { return 1 }, reason => { return 10000 })
-//     .then(value => { console.log(value) })
-//     .then(() => { })
-
-// let p = new Promise((resolve, reject) => { resolve(100) })
-// p.then().then().then(value => console.log(value)); // 100
